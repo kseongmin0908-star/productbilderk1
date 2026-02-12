@@ -135,7 +135,7 @@ body.light-mode #theme-toggle .icon-light { display: inline; }
     align-items: center;
     justify-content: center;
     text-align: center;
-    background-image: linear-gradient(var(--hero-overlay), var(--hero-overlay)), url('https://pixabay.com/ko/images/download/counselling-carafe-505203_1920.jpg');
+    background-image: linear-gradient(var(--hero-overlay), var(--hero-overlay)), url('https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=1920&q=80');
     background-size: cover;
     background-position: center;
 }
