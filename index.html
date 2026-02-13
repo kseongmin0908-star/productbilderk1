@@ -1,96 +1,95 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acqua di Cristallo Tributo a Modigliani</title>
+    <title>원시인 vs 현대인 판별기</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 </head>
 <body>
+    <div class="bg-deco">
+        <span class="float-emoji e1">🦴</span>
+        <span class="float-emoji e2">🏢</span>
+        <span class="float-emoji e3">🔥</span>
+        <span class="float-emoji e4">💻</span>
+        <span class="float-emoji e5">🪨</span>
+        <span class="float-emoji e6">📱</span>
+    </div>
+
     <header>
         <div class="logo">
-            <h1>Acqua di Cristallo</h1>
+            <span class="logo-emoji">🦣</span>
+            <h1>원시인 vs 현대인</h1>
+            <span class="logo-emoji">🧑‍💻</span>
         </div>
-        <nav>
-            <ul>
-                <li><a href="#about">The Story</a></li>
-                <li><a href="#gallery">Gallery</a></li>
-                <li><a href="#contact">제휴문의</a></li>
-            </ul>
-            <button id="theme-toggle" aria-label="Toggle theme">
-                <span class="icon-dark">&#9790;</span>
-                <span class="icon-light">&#9728;</span>
-            </button>
-        </nav>
     </header>
 
     <main>
         <section id="hero">
             <div class="hero-content">
-                <p class="hero-eyebrow">&#10022; Exclusive Collection &#10022;</p>
-                <h2>The World's Most Exquisite Water</h2>
-                <div class="gold-divider"></div>
-                <p>Acqua di Cristallo Tributo a Modigliani</p>
-                <a href="#about" class="btn">Discover the Legend</a>
+                <div class="hero-badge">AI 얼굴 판별</div>
+                <h2>당신은 원시인?<br>현대인?</h2>
+                <p class="hero-desc">사진 한 장으로 당신의 숨겨진 정체를 밝혀드립니다 🔍</p>
             </div>
         </section>
 
-        <section id="about">
-            <p class="section-eyebrow">Our Heritage</p>
-            <h2>A Masterpiece of Nature and Art</h2>
-            <div class="gold-divider center"></div>
-            <div class="about-content">
-                <p>Sourced from the purest springs in Fiji and France, Acqua di Cristallo is more than just water; it's a work of art. The bottle, a tribute to the artist Amedeo Modigliani, is handcrafted from 24-karat solid gold. This is the pinnacle of luxury, a collector's item for those who demand the extraordinary.</p>
-                <p class="price">$60,000 <span class="price-sub">per 750ml</span></p>
+        <section id="detector">
+            <div class="detector-card">
+                <div id="upload-area" class="upload-area">
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                    <div id="upload-placeholder" class="upload-placeholder">
+                        <div class="upload-icon">🖼️</div>
+                        <p class="upload-text">여기에 사진을 드래그하거나<br>클릭해서 업로드하세요</p>
+                        <span class="upload-hint">JPG, PNG 지원</span>
+                    </div>
+                    <img id="preview-image" class="preview-image hidden" alt="업로드된 이미지">
+                </div>
+                <button id="analyze-btn" class="btn hidden">🔬 판별 시작!</button>
+                <button id="retry-btn" class="btn btn-secondary hidden">🔄 다른 사진으로 다시하기</button>
+
+                <div id="result-container" class="hidden">
+                    <div id="result-emoji" class="result-emoji"></div>
+                    <div id="result-title" class="result-title"></div>
+                    <div id="result-desc" class="result-desc"></div>
+                    <div class="bars-wrapper">
+                        <div id="label-container"></div>
+                    </div>
+                </div>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>AI가 열심히 분석 중... 🧠</p>
+                </div>
             </div>
         </section>
 
-        <section id="gallery">
-            <p class="section-eyebrow">The Collection</p>
-            <h2>A Closer Look</h2>
-            <div class="gold-divider center"></div>
-            <div class="gallery-showcase">
-                <img src="luxury-water.jpg" alt="Fillico Beverly Hills Luxury Water Collection">
+        <section id="info">
+            <h2>어떻게 하나요?</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">📸</div>
+                    <h3>1. 사진 업로드</h3>
+                    <p>얼굴이 잘 나온 사진을 올려주세요</p>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">🤖</div>
+                    <h3>2. AI 분석</h3>
+                    <p>Teachable Machine이 분석합니다</p>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">😂</div>
+                    <h3>3. 결과 확인</h3>
+                    <p>원시인력 vs 현대인력 확인!</p>
+                </div>
             </div>
-        </section>
-
-        <section id="contact">
-            <p class="section-eyebrow">Partnership</p>
-            <h2>제휴 문의</h2>
-            <div class="gold-divider center"></div>
-            <p>제휴 및 비즈니스 문의를 남겨주시면 담당자가 연락드리겠습니다.</p>
-            <form class="contact-form" action="https://formspree.io/f/xykdezdw" method="POST">
-                <div class="form-group">
-                    <input type="text" name="name" placeholder="이름 / 회사명" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" name="email" placeholder="이메일" required>
-                </div>
-                <div class="form-group">
-                    <input type="tel" name="phone" placeholder="연락처">
-                </div>
-                <div class="form-group">
-                    <select name="type" required>
-                        <option value="" disabled selected>문의 유형 선택</option>
-                        <option value="wholesale">도매 / 유통</option>
-                        <option value="hotel">호텔 / 리조트</option>
-                        <option value="restaurant">레스토랑 / 바</option>
-                        <option value="corporate">기업 선물</option>
-                        <option value="other">기타</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <textarea name="message" rows="5" placeholder="문의 내용을 입력해주세요" required></textarea>
-                </div>
-                <button type="submit" class="btn">문의하기</button>
-            </form>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2023 Acqua di Cristallo. All Rights Reserved.</p>
-        <p><a href="https://www.youtube.com/@jocoding" target="_blank" rel="noopener noreferrer" class="footer-link">조코딩 JoCoding</a></p>
+        <p>🦴 원시인 vs 현대인 판별기 🧑‍💻</p>
+        <p><a href="https://naver.me/xGIBmBDi" target="_blank" rel="noopener noreferrer" class="footer-link">🍖 원시인마늘떡갈비 - 단양 맛집</a></p>
     </footer>
 
     <script src="main.js"></script>
