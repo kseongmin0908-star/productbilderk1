@@ -272,239 +272,73 @@ function showToast(message, duration) {
     setTimeout(() => toast.classList.add('hidden'), duration || 2500);
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-}
+// ── html2canvas 화면 캡쳐 후 공유 ──
+async function captureResult() {
+    const card = document.querySelector('.detector-card');
 
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    const chars = text.split('');
-    let line = '';
-    let currentY = y;
-    for (let i = 0; i < chars.length; i++) {
-        const testLine = line + chars[i];
-        if (ctx.measureText(testLine).width > maxWidth && line.length > 0) {
-            ctx.fillText(line, x, currentY);
-            line = chars[i];
-            currentY += lineHeight;
-        } else {
-            line = testLine;
-        }
-    }
-    ctx.fillText(line, x, currentY);
-}
+    // 캡쳐 전: 공유 버튼, 다시하기 버튼 숨기기
+    const shareSection = document.querySelector('.share-section');
+    const retryBtnEl = document.getElementById('retry-btn');
+    shareSection.style.display = 'none';
+    retryBtnEl.style.display = 'none';
 
-// ── Share Image Generator (includes user photo + results) ──
-function generateShareImage(format) {
-    return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-
-        // Instagram story = 1080x1920, KakaoTalk/general = 1080x1080
-        const isStory = format === 'story';
-        canvas.width = 1080;
-        canvas.height = isStory ? 1920 : 1080;
-        const W = canvas.width;
-        const H = canvas.height;
-
-        const msg = lastResult;
-        const isPrimitive = msg.type === 'primitive';
-        const isBalanced = msg.type === 'balanced';
-
-        // Background gradient
-        const grad = ctx.createLinearGradient(0, 0, 0, H);
-        if (isPrimitive) {
-            grad.addColorStop(0, '#1a0a00'); grad.addColorStop(0.5, '#2d1200'); grad.addColorStop(1, '#1a0a00');
-        } else if (isBalanced) {
-            grad.addColorStop(0, '#1a1028'); grad.addColorStop(0.5, '#241538'); grad.addColorStop(1, '#1a1028');
-        } else {
-            grad.addColorStop(0, '#001a14'); grad.addColorStop(0.5, '#002d22'); grad.addColorStop(1, '#001a14');
-        }
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-        // Decorative circles
-        const accent = isPrimitive ? 'rgba(255,107,53,0.08)' : isBalanced ? 'rgba(199,125,255,0.08)' : 'rgba(0,212,170,0.08)';
-        ctx.fillStyle = accent;
-        ctx.beginPath(); ctx.arc(150, 150, 200, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(W - 150, H - 150, 250, 0, Math.PI * 2); ctx.fill();
-
-        // ── User Photo (circular) ──
-        const img = previewImage;
-        const photoY = isStory ? 160 : 80;
-        const photoSize = isStory ? 340 : 240;
-        const photoCX = W / 2;
-        const photoCY = photoY + photoSize / 2;
-
-        // Circle clip for photo
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(photoCX, photoCY, photoSize / 2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-
-        // Draw photo centered in circle
-        const imgRatio = img.naturalWidth / img.naturalHeight;
-        let drawW, drawH, drawX, drawY;
-        if (imgRatio > 1) {
-            drawH = photoSize;
-            drawW = photoSize * imgRatio;
-            drawX = photoCX - drawW / 2;
-            drawY = photoY;
-        } else {
-            drawW = photoSize;
-            drawH = photoSize / imgRatio;
-            drawX = photoCX - photoSize / 2;
-            drawY = photoCY - drawH / 2;
-        }
-        ctx.drawImage(img, drawX, drawY, drawW, drawH);
-        ctx.restore();
-
-        // Photo border
-        const borderColor = isPrimitive ? '#ff6b35' : isBalanced ? '#c77dff' : '#00d4aa';
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.arc(photoCX, photoCY, photoSize / 2 + 3, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // ── Emoji + Title ──
-        const titleStartY = photoY + photoSize + (isStory ? 70 : 50);
-
-        ctx.textAlign = 'center';
-        ctx.font = isStory ? '120px serif' : '80px serif';
-        ctx.fillText(msg.emoji, W / 2, titleStartY);
-
-        const titleColor = isPrimitive ? '#ff6b35' : isBalanced ? '#c77dff' : '#00d4aa';
-        ctx.fillStyle = titleColor;
-        ctx.font = isStory ? '900 68px "Noto Sans KR", sans-serif' : '900 52px "Noto Sans KR", sans-serif';
-        ctx.fillText(msg.title, W / 2, titleStartY + (isStory ? 90 : 70));
-
-        // ── Percentage Bars ──
-        const prim = msg.primitiveProb.toFixed(1);
-        const mod = msg.modernProb.toFixed(1);
-        const barY = titleStartY + (isStory ? 140 : 110);
-        const barWidth = isStory ? 700 : 600;
-        const barHeight = isStory ? 44 : 36;
-        const barX = (W - barWidth) / 2;
-
-        // 원시인 bar
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        roundRect(ctx, barX, barY, barWidth, barHeight, barHeight / 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,107,53,0.85)';
-        roundRect(ctx, barX, barY, Math.max((msg.primitiveProb / 100) * barWidth, barHeight), barHeight, barHeight / 2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = `700 ${isStory ? 26 : 22}px "Noto Sans KR", sans-serif`;
-        ctx.textAlign = 'left';
-        ctx.fillText(`🦴 원시인 ${prim}%`, barX + 14, barY + barHeight * 0.72);
-
-        // 현대인 bar
-        const bar2Y = barY + barHeight + 14;
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        roundRect(ctx, barX, bar2Y, barWidth, barHeight, barHeight / 2); ctx.fill();
-        ctx.fillStyle = 'rgba(0,212,170,0.85)';
-        roundRect(ctx, barX, bar2Y, Math.max((msg.modernProb / 100) * barWidth, barHeight), barHeight, barHeight / 2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillText(`💻 현대인 ${mod}%`, barX + 14, bar2Y + barHeight * 0.72);
-
-        // ── Description Box ──
-        ctx.textAlign = 'center';
-        const descY = bar2Y + barHeight + (isStory ? 40 : 30);
-        const descW = isStory ? 880 : 760;
-        const descX = (W - descW) / 2;
-        const descH = isStory ? 380 : 220;
-
-        ctx.fillStyle = isPrimitive ? 'rgba(255,107,53,0.1)' : isBalanced ? 'rgba(199,125,255,0.1)' : 'rgba(0,212,170,0.1)';
-        roundRect(ctx, descX, descY, descW, descH, 24); ctx.fill();
-        ctx.strokeStyle = isPrimitive ? 'rgba(255,107,53,0.25)' : isBalanced ? 'rgba(199,125,255,0.25)' : 'rgba(0,212,170,0.25)';
-        ctx.lineWidth = 2;
-        roundRect(ctx, descX, descY, descW, descH, 24); ctx.stroke();
-
-        ctx.fillStyle = isPrimitive ? '#ffb899' : isBalanced ? '#e0c8ff' : '#80eed5';
-        ctx.font = `400 ${isStory ? 32 : 24}px "Noto Sans KR", sans-serif`;
-        wrapText(ctx, msg.desc, W / 2, descY + (isStory ? 50 : 38), descW - 60, isStory ? 48 : 36);
-
-        // ── Bottom Branding ──
-        const bottomY = H - (isStory ? 120 : 50);
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.font = `700 ${isStory ? 30 : 24}px "Noto Sans KR", sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText('🦣 원시인 vs 현대인 판별기 🧑‍💻', W / 2, bottomY);
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.font = `400 ${isStory ? 24 : 20}px "Noto Sans KR", sans-serif`;
-        ctx.fillText('cavemanify.pages.dev', W / 2, bottomY + (isStory ? 36 : 30));
-
-        resolve(canvas);
+    const canvas = await html2canvas(card, {
+        backgroundColor: '#2a1a42',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
     });
+
+    // 캡쳐 후: 다시 보이기
+    shareSection.style.display = '';
+    retryBtnEl.style.display = '';
+
+    return canvas;
 }
 
-function canvasToBlob(canvas) {
-    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-}
-
-async function shareWithImage(canvas, filename) {
-    const blob = await canvasToBlob(canvas);
-    const file = new File([blob], filename, { type: 'image/png' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-            await navigator.share({
-                files: [file],
-                title: '원시인 vs 현대인 판별기',
-                text: getShareText()
-            });
-            return true;
-        } catch (e) {
-            if (e.name === 'AbortError') return true; // user cancelled
-        }
-    }
-    return false;
-}
-
-function downloadCanvas(canvas, filename, toastMsg) {
+function downloadImage(canvas, filename, toastMsg) {
     const link = document.createElement('a');
     link.download = filename;
     link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     showToast(toastMsg, 3000);
 }
 
-// ── Instagram Story Share ──
-document.getElementById('share-insta').addEventListener('click', async () => {
+async function captureAndShare(filename, toastFallback) {
     if (!lastResult) return;
-    showToast('이미지 생성 중...', 5000);
+    showToast('캡쳐 중...', 5000);
 
-    const canvas = await generateShareImage('story');
-    const shared = await shareWithImage(canvas, 'cavemanify-story.png');
+    const canvas = await captureResult();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], filename, { type: 'image/png' });
 
-    if (!shared) {
-        downloadCanvas(canvas, 'cavemanify-story.png', '이미지가 저장되었습니다! 인스타 스토리에 올려보세요 📷');
+    // 모바일: Web Share API로 앱 선택 공유
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ files: [file] });
+            return;
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+        }
     }
+
+    // PC/불가: 이미지 다운로드
+    downloadImage(canvas, filename, toastFallback);
+}
+
+// ── 인스타 스토리 공유 ──
+document.getElementById('share-insta').addEventListener('click', () => {
+    captureAndShare('cavemanify-result.png', '이미지가 저장되었습니다! 인스타 스토리에 올려보세요 📷');
 });
 
-// ── KakaoTalk Share ──
-document.getElementById('share-kakao').addEventListener('click', async () => {
-    if (!lastResult) return;
-    showToast('이미지 생성 중...', 5000);
-
-    const canvas = await generateShareImage('square');
-    const shared = await shareWithImage(canvas, 'cavemanify-result.png');
-
-    if (!shared) {
-        downloadCanvas(canvas, 'cavemanify-result.png', '이미지가 저장되었습니다! 카카오톡에서 사진을 전송해보세요 💬');
-    }
+// ── 카톡 공유 ──
+document.getElementById('share-kakao').addEventListener('click', () => {
+    captureAndShare('cavemanify-result.png', '이미지가 저장되었습니다! 카카오톡에서 사진을 전송해보세요 💬');
 });
 
-// ── Link Copy ──
+// ── 링크 복사 ──
 document.getElementById('share-link').addEventListener('click', () => {
     copyToClipboard(getShareText()).then(() => {
         showToast('링크가 복사되었습니다!', 2000);
