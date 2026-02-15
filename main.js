@@ -272,75 +272,197 @@ function showToast(message, duration) {
     setTimeout(() => toast.classList.add('hidden'), duration || 2500);
 }
 
-// ── html2canvas 화면 캡쳐 후 공유 ──
-async function captureResult() {
-    const card = document.querySelector('.detector-card');
+// ── 결과 이미지 생성 (사용자 사진 + 결과 포함) ──
+function generateResultImage() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1080;
+    canvas.height = 1440;
 
-    // 캡쳐 전: 공유 버튼, 다시하기 버튼 숨기기
-    const shareSection = document.querySelector('.share-section');
-    const retryBtnEl = document.getElementById('retry-btn');
-    shareSection.style.display = 'none';
-    retryBtnEl.style.display = 'none';
+    const msg = lastResult;
+    const isPrimitive = msg.type === 'primitive';
+    const isBalanced = msg.type === 'balanced';
+    const mainColor = isPrimitive ? '#ff6b35' : isBalanced ? '#c77dff' : '#00d4aa';
 
-    const canvas = await html2canvas(card, {
-        backgroundColor: '#2a1a42',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true
-    });
+    // ── 배경 ──
+    ctx.fillStyle = '#1a1028';
+    ctx.fillRect(0, 0, 1080, 1440);
+    const grad = ctx.createLinearGradient(0, 0, 1080, 1440);
+    grad.addColorStop(0, 'rgba(42,26,66,1)');
+    grad.addColorStop(1, 'rgba(26,16,40,1)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1440);
 
-    // 캡쳐 후: 다시 보이기
-    shareSection.style.display = '';
-    retryBtnEl.style.display = '';
+    // ── 상단 타이틀 ──
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '600 28px sans-serif';
+    ctx.fillText('🦣 원시인 vs 현대인 판별기 🧑‍💻', 540, 60);
+
+    // ── 사용자 사진 (원형) ──
+    const img = previewImage;
+    const photoSize = 300;
+    const photoCX = 540;
+    const photoCY = 250;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(photoCX, photoCY, photoSize / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    let dw, dh, dx, dy;
+    if (imgRatio > 1) {
+        dh = photoSize; dw = photoSize * imgRatio;
+        dx = photoCX - dw / 2; dy = photoCY - photoSize / 2;
+    } else {
+        dw = photoSize; dh = photoSize / imgRatio;
+        dx = photoCX - photoSize / 2; dy = photoCY - dh / 2;
+    }
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+
+    // 사진 테두리
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(photoCX, photoCY, photoSize / 2 + 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // ── 이모지 ──
+    ctx.textAlign = 'center';
+    ctx.font = '100px serif';
+    ctx.fillText(msg.emoji, 540, 500);
+
+    // ── 타이틀 ──
+    ctx.fillStyle = mainColor;
+    ctx.font = '900 60px sans-serif';
+    ctx.fillText(msg.title, 540, 590);
+
+    // ── 퍼센트 바 ──
+    const prim = msg.primitiveProb.toFixed(1);
+    const mod = msg.modernProb.toFixed(1);
+    const barX = 140;
+    const barW = 800;
+    const barH = 44;
+
+    // 원시인
+    const bar1Y = 640;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.roundRect(barX, bar1Y, barW, barH, 22); ctx.fill();
+    ctx.fillStyle = '#ff6b35';
+    const primW = Math.max((msg.primitiveProb / 100) * barW, 44);
+    ctx.beginPath(); ctx.roundRect(barX, bar1Y, primW, barH, 22); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 24px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('🦴 원시인 ' + prim + '%', barX + 16, bar1Y + 30);
+
+    // 현대인
+    const bar2Y = bar1Y + 60;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.roundRect(barX, bar2Y, barW, barH, 22); ctx.fill();
+    ctx.fillStyle = '#00d4aa';
+    const modW = Math.max((msg.modernProb / 100) * barW, 44);
+    ctx.beginPath(); ctx.roundRect(barX, bar2Y, modW, barH, 22); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.fillText('💻 현대인 ' + mod + '%', barX + 16, bar2Y + 30);
+
+    // ── 설명 박스 ──
+    const descX = 100;
+    const descW = 880;
+    const descY = 800;
+    const descH = 480;
+
+    ctx.fillStyle = isPrimitive ? 'rgba(255,107,53,0.08)' : isBalanced ? 'rgba(199,125,255,0.08)' : 'rgba(0,212,170,0.08)';
+    ctx.beginPath(); ctx.roundRect(descX, descY, descW, descH, 24); ctx.fill();
+    ctx.strokeStyle = isPrimitive ? 'rgba(255,107,53,0.2)' : isBalanced ? 'rgba(199,125,255,0.2)' : 'rgba(0,212,170,0.2)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(descX, descY, descW, descH, 24); ctx.stroke();
+
+    ctx.fillStyle = isPrimitive ? '#ffb899' : isBalanced ? '#e0c8ff' : '#80eed5';
+    ctx.font = '400 32px sans-serif';
+    ctx.textAlign = 'center';
+
+    // 텍스트 줄바꿈
+    const words = msg.desc;
+    let line = '';
+    let lineY = descY + 55;
+    const maxW = descW - 60;
+    for (let i = 0; i < words.length; i++) {
+        const test = line + words[i];
+        if (ctx.measureText(test).width > maxW && line.length > 0) {
+            ctx.fillText(line, 540, lineY);
+            line = words[i];
+            lineY += 46;
+        } else {
+            line = test;
+        }
+    }
+    ctx.fillText(line, 540, lineY);
+
+    // ── 하단 브랜딩 ──
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '400 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('나도 테스트 해보기 → cavemanify0.pages.dev', 540, 1400);
 
     return canvas;
 }
 
-function downloadImage(canvas, filename, toastMsg) {
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = canvas.toDataURL('image/png');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast(toastMsg, 3000);
-}
-
-async function captureAndShare(filename, toastFallback) {
+// ── 공유 버튼 공통 로직 ──
+document.getElementById('share-insta').addEventListener('click', function () {
     if (!lastResult) return;
-    showToast('캡쳐 중...', 5000);
+    doShare('인스타 스토리에 올려보세요 📷');
+});
 
-    const canvas = await captureResult();
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const file = new File([blob], filename, { type: 'image/png' });
+document.getElementById('share-kakao').addEventListener('click', function () {
+    if (!lastResult) return;
+    doShare('카카오톡에서 사진을 전송해보세요 💬');
+});
 
-    // 모바일: Web Share API로 앱 선택 공유
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-            await navigator.share({ files: [file] });
-            return;
-        } catch (e) {
-            if (e.name === 'AbortError') return;
+function doShare(fallbackMsg) {
+    try {
+        const canvas = generateResultImage();
+        const dataURL = canvas.toDataURL('image/png');
+
+        // dataURL → Blob 변환
+        const byteString = atob(dataURL.split(',')[1]);
+        const mimeType = dataURL.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
         }
+        const blob = new Blob([ab], { type: mimeType });
+        const file = new File([blob], 'cavemanify-result.png', { type: 'image/png' });
+
+        // 모바일: Web Share API
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: '원시인 vs 현대인 판별기' })
+                .catch(function () {});
+            return;
+        }
+
+        // PC: 이미지 다운로드
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'cavemanify-result.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('이미지가 저장되었습니다! ' + fallbackMsg, 3000);
+
+    } catch (err) {
+        alert('이미지 생성에 실패했습니다: ' + err.message);
     }
-
-    // PC/불가: 이미지 다운로드
-    downloadImage(canvas, filename, toastFallback);
 }
-
-// ── 인스타 스토리 공유 ──
-document.getElementById('share-insta').addEventListener('click', () => {
-    captureAndShare('cavemanify-result.png', '이미지가 저장되었습니다! 인스타 스토리에 올려보세요 📷');
-});
-
-// ── 카톡 공유 ──
-document.getElementById('share-kakao').addEventListener('click', () => {
-    captureAndShare('cavemanify-result.png', '이미지가 저장되었습니다! 카카오톡에서 사진을 전송해보세요 💬');
-});
 
 // ── 링크 복사 ──
-document.getElementById('share-link').addEventListener('click', () => {
-    copyToClipboard(getShareText()).then(() => {
+document.getElementById('share-link').addEventListener('click', function () {
+    copyToClipboard(getShareText()).then(function () {
         showToast('링크가 복사되었습니다!', 2000);
     });
 });
