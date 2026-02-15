@@ -402,97 +402,45 @@ function generateResultImage() {
     return canvas;
 }
 
-// dataURL → File 변환
-function dataURLtoFile(dataURL, filename) {
-    var arr = dataURL.split(',');
-    var mime = arr[0].match(/:(.*?);/)[1];
-    var bstr = atob(arr[1]);
-    var n = bstr.length;
-    var u8arr = new Uint8Array(n);
-    while (n--) { u8arr[n] = bstr.charCodeAt(n); }
-    return new File([u8arr], filename, { type: mime });
-}
+// ── 결과 공유하기 버튼 ──
+document.getElementById('btn-share').addEventListener('click', function () {
+    if (!lastResult) return;
 
-// 이미지 다운로드
-function downloadDataURL(dataURL, filename) {
-    var a = document.createElement('a');
-    a.href = dataURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
+    try {
+        var canvas = generateResultImage();
+        var dataURL = canvas.toDataURL('image/png');
 
-// ── 메뉴 토글 ──
-var menuResult = document.getElementById('menu-result');
-var menuLink = document.getElementById('menu-link');
-
-document.getElementById('btn-share-result').addEventListener('click', function () {
-    menuLink.classList.add('hidden');
-    menuResult.classList.toggle('hidden');
-});
-
-document.getElementById('btn-share-link').addEventListener('click', function () {
-    menuResult.classList.add('hidden');
-    menuLink.classList.toggle('hidden');
-});
-
-// ── 옵션 클릭 처리 ──
-document.querySelector('.share-section').addEventListener('click', function (e) {
-    var btn = e.target.closest('.share-option');
-    if (!btn) return;
-    var action = btn.getAttribute('data-action');
-
-    // 결과 이미지 공유 (앱 선택)
-    if (action === 'result-native') {
-        try {
-            var canvas = generateResultImage();
-            var dataURL = canvas.toDataURL('image/png');
-            var file = dataURLtoFile(dataURL, 'cavemanify-result.png');
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ files: [file], title: '원시인 vs 현대인 판별기' }).catch(function () {});
-            } else {
-                downloadDataURL(dataURL, 'cavemanify-result.png');
-                showToast('이 브라우저에서는 앱 공유를 지원하지 않아 이미지를 저장했습니다.', 3000);
-            }
-        } catch (err) {
-            alert('[결과 공유 오류] ' + err.message);
+        // dataURL → Blob → File
+        var byteString = atob(dataURL.split(',')[1]);
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
         }
-        menuResult.classList.add('hidden');
-    }
+        var blob = new Blob([ab], { type: 'image/png' });
+        var file = new File([blob], 'cavemanify-result.png', { type: 'image/png' });
 
-    // 결과 이미지 저장
-    if (action === 'result-download') {
-        try {
-            var canvas = generateResultImage();
-            var dataURL = canvas.toDataURL('image/png');
-            downloadDataURL(dataURL, 'cavemanify-result.png');
-            showToast('이미지가 저장되었습니다! 카톡/인스타에 공유해보세요 📸', 3000);
-        } catch (err) {
-            alert('[이미지 저장 오류] ' + err.message);
+        // 1순위: Web Share API (모바일에서 카톡/인스타 등 앱 선택)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+                files: [file],
+                title: '원시인 vs 현대인 판별기',
+                text: getShareText()
+            }).catch(function () {});
+            return;
         }
-        menuResult.classList.add('hidden');
-    }
 
-    // 링크 공유 (앱 선택)
-    if (action === 'link-native') {
-        var text = getShareText();
-        if (navigator.share) {
-            navigator.share({ title: '원시인 vs 현대인 판별기', text: text }).catch(function () {});
-        } else {
-            copyToClipboard(text).then(function () {
-                showToast('이 브라우저에서는 앱 공유를 지원하지 않아 링크를 복사했습니다.', 3000);
-            });
-        }
-        menuLink.classList.add('hidden');
-    }
+        // 2순위: 이미지 다운로드 (PC)
+        var a = document.createElement('a');
+        a.href = dataURL;
+        a.download = 'cavemanify-result.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('이미지가 저장되었습니다! 카톡/인스타에 공유해보세요', 3000);
 
-    // 링크 복사
-    if (action === 'link-copy') {
-        copyToClipboard(getShareText()).then(function () {
-            showToast('링크가 복사되었습니다!', 2000);
-        });
-        menuLink.classList.add('hidden');
+    } catch (err) {
+        // 에러 시 alert으로 바로 확인
+        alert('오류 발생: ' + err.message);
     }
 });
