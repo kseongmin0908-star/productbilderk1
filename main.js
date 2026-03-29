@@ -492,21 +492,12 @@ function initShareSheet() {
 document.addEventListener('DOMContentLoaded', function() {
     initShareSheet();
 
-    // 개인정보처리방침 / 이용약관 모달
-    document.getElementById('privacy-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('privacy-modal').classList.remove('hidden');
-    });
-    document.getElementById('terms-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('terms-modal').classList.remove('hidden');
-    });
-
-    // 모달 닫기 버튼
+    // 모달 닫기 버튼 (기존 모달이 남아있는 경우 호환성 유지)
     document.querySelectorAll('.policy-close-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var modalId = this.getAttribute('data-modal');
-            document.getElementById(modalId).classList.add('hidden');
+            var modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('hidden');
         });
     });
 

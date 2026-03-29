@@ -28,6 +28,10 @@ Allow: /
 # Sitemap
 Sitemap: https://primal-type.com/sitemap.xml
 
+# Allow policy pages
+Allow: /privacy
+Allow: /terms
+
 # Block unnecessary files from crawling
 Disallow: /node_modules/
 Disallow: /my_model/
