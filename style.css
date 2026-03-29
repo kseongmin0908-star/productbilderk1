@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
 
 :root {
     --bg-primary: #1A1008;
@@ -107,8 +107,8 @@ header {
 
 .logo h1 {
     font-size: 3.5em;
-    font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-weight: 800;
+    font-family: 'Noto Sans KR', sans-serif;
     color: var(--accent);
     letter-spacing: 0.06em;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(232, 98, 28, 0.4);
@@ -140,8 +140,8 @@ header {
 
 .hero-content h2 {
     font-size: 3.2em;
-    font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-weight: 800;
+    font-family: 'Noto Sans KR', sans-serif;
     line-height: 1.35;
     letter-spacing: 0.04em;
     margin-bottom: 0.3em;
@@ -176,6 +176,59 @@ header {
 .hero-cta:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 28px var(--accent-glow);
+}
+
+/* ── Hero Summary & Update Date ── */
+.hero-summary {
+    font-size: 0.92em;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 16px auto 0;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(92, 61, 46, 0.3);
+}
+
+.last-updated {
+    font-size: 0.78em;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    margin-top: 10px;
+}
+
+/* ── Section Snippets ── */
+.section-snippet {
+    font-size: 0.92em;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.7;
+    max-width: 640px;
+    margin: -0.5em auto 1.5em;
+    text-align: center;
+}
+
+/* ── Source Links ── */
+.source-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: rgba(232, 98, 28, 0.4);
+    text-underline-offset: 2px;
+    transition: text-decoration-color 0.3s;
+}
+
+.source-link:hover {
+    text-decoration-color: var(--accent);
+}
+
+/* ── Footer Developer Info ── */
+.footer-developer {
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    opacity: 0.8;
 }
 
 /* ── Detector ── */
@@ -349,7 +402,7 @@ header {
 .result-title {
     font-size: 1.8em;
     font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     letter-spacing: 0.04em;
     line-height: 1.4;
     margin-bottom: 12px;
@@ -576,7 +629,7 @@ header {
 #info h2 {
     font-size: 2.2em;
     font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     letter-spacing: 0.04em;
     margin-bottom: 1em;
 }
@@ -629,7 +682,7 @@ header {
 #about h2 {
     font-size: 2.2em;
     font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     letter-spacing: 0.04em;
     margin-bottom: 1em;
     text-align: center;
@@ -687,7 +740,7 @@ header {
 #tips h2 {
     font-size: 2.2em;
     font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     letter-spacing: 0.04em;
     margin-bottom: 1em;
     text-align: center;
@@ -714,7 +767,7 @@ header {
 .tip-number {
     font-size: 2em;
     font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     letter-spacing: 0.05em;
     color: var(--accent);
     opacity: 0.4;
@@ -744,7 +797,7 @@ header {
 #faq h2 {
     font-size: 2.2em;
     font-weight: 900;
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     letter-spacing: 0.04em;
     margin-bottom: 1em;
     text-align: center;
@@ -1001,6 +1054,9 @@ footer {
     .hero-content h2 { font-size: 2em; }
     .hero-desc { font-size: 0.95em; }
     .hero-badge { font-size: 0.78em; padding: 5px 14px; margin-bottom: 14px; }
+
+    .hero-summary { font-size: 0.85em; padding: 10px 16px; }
+    .section-snippet { font-size: 0.85em; }
 
     #detector { padding: 20px 12px 60px; }
     .detector-card {
