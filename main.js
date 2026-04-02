@@ -330,25 +330,24 @@ async function saveResult() {
         if (isMobile) {
             const newTab = window.open('', '_blank');
             if (newTab) {
-                newTab.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>결과 저장</title>
-                        <style>
-                            body { margin: 0; background: #1A1008; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
-                            img { max-width: 95%; height: auto; border-radius: 12px; }
-                            p { color: #F5A623; margin-top: 16px; font-size: 15px; text-align: center; padding: 0 20px; }
-                        </style>
-                    </head>
-                    <body>
-                        <img src="${dataUrl}" alt="결과">
-                        <p>📲 이미지를 길게 눌러서 갤러리에 저장하세요!</p>
-                    </body>
-                    </html>
-                `);
+                newTab.document.title = '결과 저장';
+                const metaCharset = newTab.document.createElement('meta');
+                metaCharset.setAttribute('charset', 'UTF-8');
+                newTab.document.head.appendChild(metaCharset);
+                const metaViewport = newTab.document.createElement('meta');
+                metaViewport.name = 'viewport';
+                metaViewport.content = 'width=device-width, initial-scale=1.0';
+                newTab.document.head.appendChild(metaViewport);
+                const style = newTab.document.createElement('style');
+                style.textContent = 'body{margin:0;background:#1A1008;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;}img{max-width:95%;height:auto;border-radius:12px;}p{color:#F5A623;margin-top:16px;font-size:15px;text-align:center;padding:0 20px;}';
+                newTab.document.head.appendChild(style);
+                const img = newTab.document.createElement('img');
+                img.src = dataUrl;
+                img.alt = '결과';
+                newTab.document.body.appendChild(img);
+                const p = newTab.document.createElement('p');
+                p.textContent = '📲 이미지를 길게 눌러서 갤러리에 저장하세요!';
+                newTab.document.body.appendChild(p);
                 newTab.document.close();
                 showToast('📲 이미지를 길게 눌러 저장하세요!');
                 return;
@@ -555,6 +554,18 @@ fileInput.addEventListener('change', (e) => {
 });
 
 function handleFile(file) {
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+
+    if (file.size > MAX_SIZE) {
+        showToast('파일 크기가 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.');
+        return;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+        showToast('지원하지 않는 파일 형식입니다. JPG 또는 PNG 이미지를 사용해주세요.');
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
         previewImage.src = e.target.result;
@@ -596,15 +607,25 @@ analyzeBtn.addEventListener('click', async () => {
 
             const barDiv = document.createElement('div');
             barDiv.className = barClass;
-            barDiv.innerHTML = `
-                <div class="label-row">
-                    <span>${name}</span>
-                    <span>${percent}%</span>
-                </div>
-                <div class="bar-bg">
-                    <div class="bar-fill" style="width: 0%"></div>
-                </div>
-            `;
+
+            const labelRow = document.createElement('div');
+            labelRow.className = 'label-row';
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+            const percentSpan = document.createElement('span');
+            percentSpan.textContent = percent + '%';
+            labelRow.appendChild(nameSpan);
+            labelRow.appendChild(percentSpan);
+
+            const barBg = document.createElement('div');
+            barBg.className = 'bar-bg';
+            const barFill = document.createElement('div');
+            barFill.className = 'bar-fill';
+            barFill.style.width = '0%';
+            barBg.appendChild(barFill);
+
+            barDiv.appendChild(labelRow);
+            barDiv.appendChild(barBg);
             labelContainer.appendChild(barDiv);
 
             // Animate bar after append
@@ -630,7 +651,8 @@ analyzeBtn.addEventListener('click', async () => {
     } catch (err) {
         loading.classList.add('hidden');
         analyzeBtn.classList.remove('hidden');
-        alert('분석에 실패했습니다. 모델 파일을 확인해주세요.\n' + err.message);
+        console.error('Analysis error:', err);
+        alert('분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
 });
 
